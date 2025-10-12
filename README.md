@@ -3,8 +3,6 @@
 Набор инструментов для мониторинга контейнеров jk-museum:
 Prometheus + Grafana + Alertmanager + Loki + Promtail + cAdvisor + Node Exporter
 
----
-
 ## Как подключить к проекту
 
 ### 1) Убедитесь, что в `docker-compose.yml` проекта контейнер `backend` имеет метки:
