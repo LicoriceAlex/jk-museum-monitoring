@@ -134,4 +134,4 @@ volumes:
 networks:
   default:
     external: true
-    name: jk-museum_default # сеть прод-проекта (Grafana/Prometheus/Loki окажутся в одной сети с приложением)
+    name: jk-museum-dev_default # сеть прод-проекта (Grafana/Prometheus/Loki окажутся в одной сети с приложением)
