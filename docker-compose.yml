@@ -7,14 +7,19 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=15d
-      - --web.enable-lifecycle
+      - --storage.tsdb.retention.time=15d   # базовый ретеншн на 15 дней
+      - --web.enable-lifecycle # позволяет перезагружать конфиг по POST /-/reload
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
-    ports: ["9090:9090"]
+    ports: ["9090:9090"]  # откроет UI наружу
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
@@ -22,31 +27,47 @@ services:
     command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
     volumes:
       - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-    ports: ["9093:9093"]
-    env_file: .env
+    ports: ["9093:9093"] # UI
+    env_file: .env # Подключаем тг бота
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.53.0
     container_name: cadvisor
-    privileged: true
+    privileged: true # нужно для доступа к метрикам ядра/контейнеров
     ports: ["8080:8080"]
     volumes:
+      # читаем ФС и докер-артефакты ТОЛЬКО на чтение
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
 
   node-exporter:
     image: prom/node-exporter:v1.9.0
     container_name: node-exporter
-    pid: host
-    network_mode: host
+    pid: host # видеть процессы хоста
+    network_mode: host  # слушает на 9100 на ХОСТЕ, этот сервис не участвует в docker-сетях
     command: ["--path.rootfs=/"]
     volumes:
       - /:/host:ro,rslave
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 256m
 
   grafana:
     image: grafana/grafana:12.1.2
@@ -57,11 +78,17 @@ services:
       - GF_USERS_DEFAULT_THEME=light
     volumes:
       - grafana_data:/var/lib/grafana
+      # авто провижнинг источников/дашбордов
       - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-    ports: ["3001:3000"]
+    ports: ["3001:3000"] # UI Grafana
     depends_on: [prometheus]
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
 
   loki:
     image: grafana/loki:3.5.6
@@ -72,18 +99,31 @@ services:
       - loki_data:/loki
     ports: ["3100:3100"]
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
 
   promtail:
     image: grafana/promtail:3.5.6
     container_name: promtail
     command: ["-config.file=/etc/promtail/config.yml"]
     volumes:
+      # Читаем docker json-логи контейнеров и дергаем Docker API через сокет
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./monitoring/promtail/config.yml:/etc/promtail/config.yml:ro
-      - promtail_positions:/positions
+      - promtail_positions:/positions # сюда promtail пишет курсор
     depends_on: [loki]
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512m
+        reservations:
+          memory: 256m
 
 volumes:
   prometheus_data:
@@ -94,4 +134,4 @@ volumes:
 networks:
   default:
     external: true
-    name: myapp_default   # <-- имя сети прод-проекта
+    name: jk-museum_default # сеть прод-проекта (Grafana/Prometheus/Loki окажутся в одной сети с приложением)
