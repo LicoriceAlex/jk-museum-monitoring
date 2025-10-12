@@ -59,9 +59,9 @@ services:
     container_name: node-exporter
     pid: host # видеть процессы хоста
     network_mode: host  # слушает на 9100 на ХОСТЕ, этот сервис не участвует в docker-сетях
-    command: ["--path.rootfs=/"]
+    command: ["--path.rootfs=/host"]
     volumes:
-      - /:/host:ro,rslave
+      - /:/host:ro
     restart: unless-stopped
     deploy:
       resources:
