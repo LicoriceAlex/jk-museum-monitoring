@@ -5,7 +5,6 @@ Prometheus + Grafana + Alertmanager + Loki + Promtail + cAdvisor + Node Exporter
 Разворачиваем мониторинг docker-контейнеров на prometheus + grafana с логами через loki и promtail и алертами в telegram.
 
 ## Как подключить к проекту
-```
 ### 1) Настройте .env
 ```
 TELEGRAM_BOT_TOKEN=771....
