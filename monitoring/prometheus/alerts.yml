@@ -1,7 +1,7 @@
 groups:
-- name: containers
+- name: containers # группа правил для контейнеров
   rules:
-  - alert: ContainerHighCPU
+  - alert: ContainerHighCPU # алерт на высокую загрузку cpu
     expr: sum by (name) (rate(container_cpu_usage_seconds_total{image!=""}[5m])) * 100 > 80
     for: 5m
     labels: { severity: warning }
@@ -9,7 +9,7 @@ groups:
       summary: "Высокая загрузка CPU"
       description: "Контейнер {{ $labels.name }} потребляет >80% CPU"
 
-  - alert: ContainerHighMemory
+  - alert: ContainerHighMemory # алерт на высокое потребление памяти
     expr: (container_memory_working_set_bytes{image!=""} / container_spec_memory_limit_bytes{image!=""}) * 100 > 95
     for: 5m
     labels: { severity: warning }

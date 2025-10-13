@@ -1,19 +1,19 @@
-name: jk-museum
+name: jk-museum # имя проекта compose
 
 services:
   prometheus:
-    image: prom/prometheus:v3.5.0
+    image: prom/prometheus:v3.5.0 # образ prometheus
     container_name: prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=15d   # базовый ретеншн на 15 дней
-      - --web.enable-lifecycle # позволяет перезагружать конфиг по POST /-/reload
+      - --storage.tsdb.retention.time=15d # ретеншн 15 дней
+      - --web.enable-lifecycle # позволяет перезагружать конфиг по http
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
       - prometheus_data:/prometheus
-    ports: ["9090:9090"]  # откроет UI наружу
+    ports: ["9090:9090"] # ui prometheus
     restart: unless-stopped
     deploy:
       resources:
@@ -22,9 +22,9 @@ services:
           memory: 512m
 
   amcfg:
-    image: alpine:3.20
+    image: alpine:3.20 # легкий образ для генерации конфига
     container_name: amcfg
-    env_file: .env
+    env_file: .env # подцепляем переменные окружения
     working_dir: /work
     volumes:
       - ./monitoring/alertmanager:/work
@@ -32,14 +32,15 @@ services:
     command: >
       "apk add --no-cache gettext >/dev/null &&
        envsubst < /work/alertmanager.tmpl.yml > /work/alertmanager.yml"
+    # генерим alertmanager.yml из шаблона с env переменными
 
   alertmanager:
-    image: prom/alertmanager:v0.27.0
+    image: prom/alertmanager:v0.27.0 # образ alertmanager
     container_name: alertmanager
     command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
     volumes:
       - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-    ports: ["9093:9093"] # UI
+    ports: ["9093:9093"] # ui alertmanager
     restart: unless-stopped
     deploy:
       resources:
@@ -48,19 +49,18 @@ services:
           memory: 256m
     depends_on:
       amcfg:
-        condition: service_completed_successfully
+        condition: service_completed_successfully # ждём генерации конфига
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    image: gcr.io/cadvisor/cadvisor:v0.52.1 # образ cadvisor
     container_name: cadvisor
-    privileged: true # нужно для доступа к метрикам ядра/контейнеров
-    ports: ["8080:8080"]
+    privileged: true # нужен доступ к системным метрикам
+    ports: ["8080:8080"] # ui cadvisor по желанию
     volumes:
-      # читаем ФС и докер-артефакты ТОЛЬКО на чтение
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
+      - /:/rootfs:ro # корневая fs только чтение
+      - /var/run:/var/run:ro # доступ к docker сокету
+      - /sys:/sys:ro # системные метрики
+      - /var/lib/docker/:/var/lib/docker:ro # метаданные docker
     restart: unless-stopped
     deploy:
       resources:
@@ -69,11 +69,11 @@ services:
           memory: 512m
 
   node-exporter:
-    image: prom/node-exporter:v1.9.0
+    image: prom/node-exporter:v1.9.0 # метрики хоста
     container_name: node-exporter
     pid: host # видеть процессы хоста
-    network_mode: host  # слушает на 9100 на ХОСТЕ, этот сервис не участвует в docker-сетях
-    command: ["--path.rootfs=/host"]
+    network_mode: host # слушать 9100 на хосте
+    command: ["--path.rootfs=/host"] # корень хоста смонтирован как /host
     volumes:
       - /:/host:ro
     restart: unless-stopped
@@ -84,18 +84,17 @@ services:
           memory: 256m
 
   grafana:
-    image: grafana/grafana:12.1.2
+    image: grafana/grafana:12.1.2 # grafana
     container_name: grafana
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_DEFAULT_THEME=light
+      - GF_SECURITY_ADMIN_USER=admin # логин админа
+      - GF_SECURITY_ADMIN_PASSWORD=admin # пароль админа
+      - GF_USERS_DEFAULT_THEME=dark # светлая тема по умолчанию
     volumes:
-      - grafana_data:/var/lib/grafana
-      # авто провижнинг источников/дашбордов
-      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-    ports: ["3001:3000"] # UI Grafana
+      - grafana_data:/var/lib/grafana # данные grafana
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources # источники
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards # дашборды
+    ports: ["3001:3000"] # ui grafana на 3001
     depends_on: [prometheus]
     restart: unless-stopped
     deploy:
@@ -105,13 +104,13 @@ services:
           memory: 1g
 
   loki:
-    image: grafana/loki:3.5.6
+    image: grafana/loki:3.5.6 # loki для логов
     container_name: loki
     command: ["-config.file=/etc/loki/local-config.yaml"]
     volumes:
       - ./monitoring/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
       - loki_data:/loki
-    ports: ["3100:3100"]
+    ports: ["3100:3100"] # api loki
     restart: unless-stopped
     deploy:
       resources:
@@ -120,15 +119,14 @@ services:
           memory: 512m
 
   promtail:
-    image: grafana/promtail:3.5.6
+    image: grafana/promtail:3.5.6 # агент логов
     container_name: promtail
     command: ["-config.file=/etc/promtail/config.yml"]
     volumes:
-      # Читаем docker json-логи контейнеров и дергаем Docker API через сокет
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro # json логи контейнеров
+      - /var/run/docker.sock:/var/run/docker.sock:ro # docker api
       - ./monitoring/promtail/config.yml:/etc/promtail/config.yml:ro
-      - promtail_positions:/positions # сюда promtail пишет курсор
+      - promtail_positions:/positions # позиции логов
     depends_on: [loki]
     restart: unless-stopped
     deploy:
@@ -140,12 +138,12 @@ services:
           memory: 256m
 
 volumes:
-  prometheus_data:
-  grafana_data:
-  loki_data:
-  promtail_positions:
+  prometheus_data: # данные prometheus
+  grafana_data: # данные grafana
+  loki_data: # данные loki
+  promtail_positions: # позиции promtail
 
 networks:
   default:
     external: true
-    name: jk-museum-dev_default # сеть прод-проекта (Grafana/Prometheus/Loki окажутся в одной сети с приложением)
+    name: jk-museum-dev_default # используем уже существующую сеть проекта

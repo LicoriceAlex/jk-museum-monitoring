@@ -1,9 +1,9 @@
 apiVersion: 1
 providers:
   - name: "Provisioned Dashboards"
-    folder: "Provisioned Dashboards"
+    folder: "Provisioned Dashboards" # папка где появятся доски
     type: file
-    disableDeletion: false
-    updateIntervalSeconds: 10
+    disableDeletion: false # разрешаем удалять вручную
+    updateIntervalSeconds: 10 # период пересканирования
     options:
-      path: /etc/grafana/provisioning/dashboards
+      path: /etc/grafana/provisioning/dashboards # путь где искать json с дашбордами

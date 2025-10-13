@@ -1,22 +1,22 @@
 server:
-  http_listen_port: 9080
-  grpc_listen_port: 0
+  http_listen_port: 9080 # порт для метрик и хелсчека promtail
+  grpc_listen_port: 0 # grpc отключен
 
 positions:
-  filename: /positions/positions.yaml
+  filename: /positions/positions.yaml # где хранить позиции прочитанных логов
 
 clients:
-  - url: http://loki:3100/loki/api/v1/push
+  - url: http://loki:3100/loki/api/v1/push # адрес loki для отправки логов
 
 scrape_configs:
-  - job_name: docker-all
+  - job_name: docker-all # читаем все контейнеры
     docker_sd_configs:
-      - host: unix:///var/run/docker.sock
-        refresh_interval: 5s
+      - host: unix:///var/run/docker.sock # подключаемся к docker сокету
+        refresh_interval: 5s # период обновления списка контейнеров
     relabel_configs:
       - source_labels: ['__meta_docker_container_id']
         target_label: '__path__'
-        replacement: /var/lib/docker/containers/$1/*-json.log
+        replacement: /var/lib/docker/containers/$1/*-json.log  # путь к json логам контейнера
       - source_labels: ['__meta_docker_container_name']
         target_label: 'container'
         regex: '/(.*)'

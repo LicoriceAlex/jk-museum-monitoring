@@ -1,11 +1,12 @@
 apiVersion: 1
 datasources:
-  - name: Prometheus
-    uid: prometheus
+  - name: Prometheus # источник prometheus
+    uid: prometheus # фиксированный uid чтобы ссылки не ломались
     type: prometheus
-    access: proxy
-    url: http://prometheus:9090
-    isDefault: true
+    access: proxy # проксируем через grafana
+    url: http://prometheus:9090 # адрес в докер сети
+    isDefault: true # делаем дефолтным
+
   - name: Loki
     uid: loki
     type: loki
