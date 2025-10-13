@@ -48,7 +48,7 @@
           "refId": "A",
           "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{image!=\"\", name=~\"$container\"}[$__rate_interval])) * 100",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -70,7 +70,7 @@
           "refId": "A",
           "expr": "sum by (name) (container_memory_working_set_bytes{image!=\"\", name=~\"$container\"}) / 1024 / 1024",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -92,7 +92,7 @@
           "refId": "A",
           "expr": "(sum by (name) (container_memory_working_set_bytes{image!=\"\", name=~\"$container\"}) / clamp_min(sum by (name) (container_spec_memory_limit_bytes{image!=\"\", name=~\"$container\"}), 1)) * 100",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -114,7 +114,7 @@
           "refId": "A",
           "expr": "sum by (name) (container_fs_usage_bytes{name=~\"$container\", image!=\"\"}) / 1024 / 1024 / 1024",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -138,7 +138,7 @@
           "refId": "A",
           "expr": "sum by (name) (rate(container_fs_reads_bytes_total{image!=\"\", name=~\"$container\"}[$__rate_interval]))",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -154,7 +154,7 @@
           "refId": "A",
           "expr": "sum by (name) (rate(container_fs_writes_bytes_total{image!=\"\", name=~\"$container\"}[$__rate_interval]))",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -170,7 +170,7 @@
           "refId": "A",
           "expr": "sum by (name) (rate(container_network_receive_bytes_total{image!=\"\", name=~\"$container\"}[$__rate_interval]))",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -186,7 +186,7 @@
           "refId": "A",
           "expr": "sum by (name) (rate(container_network_transmit_bytes_total{image!=\"\", name=~\"$container\"}[$__rate_interval]))",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     },
@@ -210,7 +210,7 @@
           "refId": "A",
           "expr": "(time() - max by (name) (container_start_time_seconds{image!=\"\", name=~\"$container\"})) / 3600",
           "legendFormat": "{{name}}",
-          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" }
+          "datasource": { "type": "prometheus", "uid": "prometheus" }
         }
       ]
     }
@@ -233,7 +233,7 @@
         "name": "container",
         "label": "Container (name)",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
         "query": "label_values(container_cpu_usage_seconds_total{image!=\"\"}, name)",
         "includeAll": true,
         "multi": true,

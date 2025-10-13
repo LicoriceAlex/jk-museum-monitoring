@@ -21,6 +21,18 @@ services:
           cpus: "1.0"
           memory: 512m
 
+  amcfg:
+    image: alpine:3.20
+    container_name: amcfg
+    env_file: .env
+    working_dir: /work
+    volumes:
+      - ./monitoring/alertmanager:/work
+    entrypoint: ["/bin/sh","-c"]
+    command: >
+      "apk add --no-cache gettext >/dev/null &&
+       envsubst < /work/alertmanager.tmpl.yml > /work/alertmanager.yml"
+
   alertmanager:
     image: prom/alertmanager:v0.27.0
     container_name: alertmanager
@@ -28,13 +40,15 @@ services:
     volumes:
       - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     ports: ["9093:9093"] # UI
-    env_file: .env # Подключаем тг бота
     restart: unless-stopped
     deploy:
       resources:
         limits:
           cpus: "0.5"
           memory: 256m
+    depends_on:
+      amcfg:
+        condition: service_completed_successfully
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.52.1
